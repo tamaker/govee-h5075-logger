@@ -1,0 +1,14 @@
+{
+  "name": "govee-h5075-logger",
+  "version": "1.0.0",
+  "description": "Read temp/humidity/battery from Govee H5075 sensors via BLE advertisements (macOS / Apple Silicon)",
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "demo": "node demo.js",
+    "collect": "node collector.js"
+  },
+  "dependencies": {
+    "@abandonware/noble": "^1.9.2-26"
+  }
+}

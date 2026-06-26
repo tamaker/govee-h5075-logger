@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Runtime logs / generated data
+logs/
+*.tmp
+readings.csv
+
+# OS / editor
+.DS_Store
