@@ -13,18 +13,13 @@ const SAMPLE_INTERVAL_MS = 60_000; // min ms between logged samples per device
 const LOG_DIR = path.join(__dirname, '..', 'logs');
 const ENV_PATH = path.join(__dirname, '..', '.env');
 
-// Built-in custom names per device (used when no .env override is present).
-const DEFAULT_NAMES = {
-  'GVH5075_1098': 'downstairs',
-  'GVH5075_A7A8': 'garage',
-  'GVH5075_C375': 'upstairs',
-};
-
-// Optionally override names via a root .env file, e.g.:
+// Custom names per device come from an optional root .env file, e.g.:
 //   GVH5075_1098=downstairs
-// Lines are KEY=VALUE; blank lines and #comments are ignored. The file is optional.
+// Lines are KEY=VALUE; blank lines and #comments are ignored. The file is optional —
+// any device not listed falls back to its raw advertised name (e.g. "GVH5075_1098").
+// Run `node demo.js` to discover your own device names, then copy .env.example to .env.
 function loadEnvNames() {
-  const names = { ...DEFAULT_NAMES };
+  const names = {};
   if (!fs.existsSync(ENV_PATH)) return names;
   try {
     for (const raw of fs.readFileSync(ENV_PATH, 'utf8').split('\n')) {
