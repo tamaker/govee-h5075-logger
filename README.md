@@ -73,7 +73,7 @@ Output goes to `logs/readings-<local-date>.json`, e.g. `logs/readings-2026-06-25
   "time": "21:10:32",
   "epoch": 1782436232,
   "device_name": "GVH5075_C375",
-  "label": "GVH5075_C375",
+  "custom_name": "upstairs",
   "temp_c": 23.2,
   "temp_f": 73.76,
   "humidity_pct": 51.1,
@@ -82,7 +82,32 @@ Output goes to `logs/readings-<local-date>.json`, e.g. `logs/readings-2026-06-25
 }
 ```
 
-To give sensors friendly names (e.g. "Living Room"), edit the `LABELS` map at the top of `node/collector.js`. To change how often readings are logged, edit `SAMPLE_INTERVAL_MS` (default `60_000` ms).
+To change how often readings are logged, edit `SAMPLE_INTERVAL_MS` in `node/collector.js` (default `60_000` ms).
+
+### Naming your sensors
+
+Each reading includes a `custom_name`. The built-in defaults are:
+
+| Device | custom_name |
+|--------|-------------|
+| `GVH5075_1098` | `downstairs` |
+| `GVH5075_A7A8` | `garage` |
+| `GVH5075_C375` | `upstairs` |
+
+To override them, copy `.env.example` to `.env` in the project root and edit the values (optional — if `.env` is absent, the defaults above are used):
+
+```bash
+cp .env.example .env
+```
+
+```ini
+# .env  (format: <device_name>=<custom_name>)
+GVH5075_1098=downstairs
+GVH5075_A7A8=garage
+GVH5075_C375=upstairs
+```
+
+`.env` is git-ignored; `.env.example` is the committed template.
 
 ### Diagnostics (a sensor isn't showing up?)
 

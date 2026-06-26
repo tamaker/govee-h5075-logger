@@ -11,13 +11,38 @@ const { decodeH5075 } = require('./govee');
 
 const SAMPLE_INTERVAL_MS = 60_000; // min ms between logged samples per device
 const LOG_DIR = path.join(__dirname, '..', 'logs');
+const ENV_PATH = path.join(__dirname, '..', '.env');
 
-// Discovered on this Mac (2026-06-25). Add a friendly label to each, e.g. 'Living Room'.
-const LABELS = {
-  'GVH5075_1098': 'GVH5075_1098', // strong signal (~-53..-86 dBm)
-  'GVH5075_A7A8': 'GVH5075_A7A8', // strong signal (~-62..-74 dBm)
-  'GVH5075_C375': 'GVH5075_C375', // weakest / most distant (~-63..-90 dBm)
+// Built-in custom names per device (used when no .env override is present).
+const DEFAULT_NAMES = {
+  'GVH5075_1098': 'downstairs',
+  'GVH5075_A7A8': 'garage',
+  'GVH5075_C375': 'upstairs',
 };
+
+// Optionally override names via a root .env file, e.g.:
+//   GVH5075_1098=downstairs
+// Lines are KEY=VALUE; blank lines and #comments are ignored. The file is optional.
+function loadEnvNames() {
+  const names = { ...DEFAULT_NAMES };
+  if (!fs.existsSync(ENV_PATH)) return names;
+  try {
+    for (const raw of fs.readFileSync(ENV_PATH, 'utf8').split('\n')) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const eq = line.indexOf('=');
+      if (eq === -1) continue;
+      const key = line.slice(0, eq).trim();
+      let val = line.slice(eq + 1).trim().replace(/^["']|["']$/g, ''); // strip wrapping quotes
+      if (key) names[key] = val;
+    }
+  } catch (e) {
+    console.warn(`Could not read .env (${e.message}); using default names.`);
+  }
+  return names;
+}
+
+const CUSTOM_NAMES = loadEnvNames();
 
 const lastLogged = new Map();
 
@@ -79,7 +104,7 @@ noble.on('discover', (peripheral) => {
     time: when.time,
     epoch: Math.floor(now / 1000),
     device_name: name,
-    label: LABELS[name] || name,
+    custom_name: CUSTOM_NAMES[name] || name,
     temp_c: Number(decoded.tempC.toFixed(2)),
     temp_f: Number(decoded.tempF.toFixed(2)),
     humidity_pct: Number(decoded.humidity.toFixed(1)),
@@ -89,7 +114,7 @@ noble.on('discover', (peripheral) => {
 
   appendReading(reading);
   console.log(
-    `${reading.timestamp_local}  ${reading.label.padEnd(16)} ` +
+    `${reading.timestamp_local}  ${reading.custom_name.padEnd(16)} ` +
     `${reading.temp_c.toFixed(1)}°C / ${reading.temp_f.toFixed(1)}°F` +
     `  ${reading.humidity_pct.toFixed(1)}%  batt ${reading.battery_pct}%  rssi ${reading.rssi}`
   );

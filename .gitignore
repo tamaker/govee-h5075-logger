@@ -6,5 +6,8 @@ logs/
 *.tmp
 readings.csv
 
+# Local config (custom sensor names) — template is .env.example
+.env
+
 # OS / editor
 .DS_Store
