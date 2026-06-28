@@ -89,6 +89,8 @@ node demo.js 2        # expect a different number
 
 A polished GUI alternative to the CLI — a live dashboard with sensor cards, in-app renaming, charts, alerts, and exports.
 
+![Govee H5075 desktop dashboard](docs/images/electron-app.png)
+
 ```bash
 cd electron
 npm install
