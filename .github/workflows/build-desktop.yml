@@ -1,0 +1,57 @@
+name: Build desktop apps
+
+# Builds the Electron dashboard into installers for macOS and Windows.
+# Native modules can't be cross-built, so each OS builds on its own runner.
+# Triggers: pushing a version tag (v1.2.3) attaches installers to a Release;
+# you can also run it manually from the Actions tab.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            script: dist:mac
+            artifact: macos-dmg
+            glob: electron/dist/*.dmg
+          - os: windows-latest
+            script: dist:win
+            artifact: windows-installer
+            glob: electron/dist/*.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: electron
+        run: npm install
+
+      - name: Build installer
+        working-directory: electron
+        run: npm run ${{ matrix.script }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.glob }}
+
+      - name: Attach to release (tag builds only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.glob }}

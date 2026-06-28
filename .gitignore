@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Packaged app output
+dist/
+
 # Runtime logs / generated data
 logs/
 *.tmp

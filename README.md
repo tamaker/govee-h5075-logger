@@ -112,6 +112,21 @@ npm start            # launch the dashboard
 
 `names.json` is git-ignored (personal, like `.env`) and is seeded from your `.env` on first run, so the GUI and CLI stay in sync.
 
+### 📦 Building installers (.dmg / .exe)
+
+The dashboard packages into native installers with [electron-builder](https://www.electron.build/).
+
+```bash
+cd electron
+npm install
+npm run dist:mac     # → electron/dist/*.dmg   (build on macOS)
+npm run dist:win     # → electron/dist/*.exe   (build on Windows)
+```
+
+- **Native modules can't be cross-built** — build the macOS app on a Mac and the Windows app on Windows. The included GitHub Actions workflow ([`.github/workflows/build-desktop.yml`](.github/workflows/build-desktop.yml)) builds **both** on their own runners: push a version tag (`git tag v1.0.0 && git push --tags`) and the `.dmg` + `.exe` are attached to a GitHub Release. You can also trigger it manually from the Actions tab.
+- **Unsigned builds** run on your own machines but show a Gatekeeper (macOS) / SmartScreen (Windows) warning on first launch — right-click → Open (Mac) or "More info → Run anyway" (Windows). Distributing without warnings needs an Apple Developer cert and/or a Windows code-signing cert; the build config has a clear spot to add them later.
+- When packaged, logs and `names.json` live in the per-user app-data folder (macOS: `~/Library/Application Support/govee-h5075-desktop/`), since the app bundle itself is read-only.
+
 ## 📂 Project layout
 
 ```

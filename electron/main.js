@@ -8,14 +8,20 @@ const path = require('path');
 const fs = require('fs');
 
 // Reuse the proven decoder + persistence helpers from the CLI side.
-const NODE_DIR = path.join(__dirname, '..', 'node');
+// Dev: load straight from ../node. Packaged: electron-builder copies these into
+// Resources/shared (see build.extraResources in package.json).
+const NODE_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, 'shared')
+  : path.join(__dirname, '..', 'node');
 const { decodeH5075 } = require(path.join(NODE_DIR, 'govee'));
 const store = require(path.join(NODE_DIR, 'store'));
 
-const ROOT = path.join(__dirname, '..');
-const NAMES_PATH = path.join(ROOT, 'names.json');
-const ENV_PATH = path.join(ROOT, '.env');
-const LOG_DIR = path.join(ROOT, 'logs');
+// User-writable data. Dev: project root (stays in sync with the CLI). Packaged:
+// the OS per-user app-data dir, since the app bundle itself is read-only.
+const DATA_DIR = app.isPackaged ? app.getPath('userData') : path.join(__dirname, '..');
+const NAMES_PATH = path.join(DATA_DIR, 'names.json');
+const ENV_PATH = path.join(DATA_DIR, '.env');
+const LOG_DIR = path.join(DATA_DIR, 'logs');
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
 
 let noble = null;

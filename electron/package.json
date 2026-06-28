@@ -2,15 +2,52 @@
   "name": "govee-h5075-desktop",
   "version": "1.0.0",
   "description": "Electron desktop dashboard for Govee H5075 BLE sensors",
+  "author": "tamaker",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "smoke": "electron smoke.js"
+    "smoke": "electron smoke.js",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
   },
   "dependencies": {
     "@abandonware/noble": "^1.9.2-26"
   },
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.tamaker.govee-h5075",
+    "productName": "Govee H5075 Dashboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      { "from": "../node/govee.js", "to": "shared/govee.js" },
+      { "from": "../node/store.js", "to": "shared/store.js" }
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "extendInfo": {
+        "NSBluetoothAlwaysUsageDescription": "This app reads temperature and humidity from nearby Govee H5075 sensors over Bluetooth.",
+        "NSBluetoothPeripheralUsageDescription": "This app reads temperature and humidity from nearby Govee H5075 sensors over Bluetooth."
+      }
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
