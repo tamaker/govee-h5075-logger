@@ -85,6 +85,28 @@ node demo.js          # expects 3 sensors
 node demo.js 2        # expect a different number
 ```
 
+## 🖼️ Desktop app (Electron)
+
+A polished GUI alternative to the CLI — a live dashboard with sensor cards, in-app renaming, charts, alerts, and exports.
+
+```bash
+cd electron
+npm install
+npm start
+```
+
+**What it does:**
+
+- 📇 **Live sensor cards** — temperature, humidity, battery, and signal bars updating in real time, with online/offline status and "last seen" age.
+- ✏️ **Manage custom names** — click a sensor's name to rename it inline; saved to `names.json` and usable by the CLI via **Export ▾ → Sync names → .env**.
+- 📈 **Live sparklines** — rolling temp & humidity history drawn per card.
+- 🌡️ **°C / °F toggle** — switch units app-wide instantly.
+- 🚨 **Threshold alerts** — set high/low temp, humidity, and low-battery limits in Settings; offending cards highlight and a toast fires.
+- 💾 **One-click export** — session readings to CSV or JSON, or open the log folder.
+- 📝 **Built-in logging** — toggle per-day JSON logging (same format as the CLI) straight from the toolbar.
+
+`names.json` is git-ignored (personal, like `.env`) and is seeded from your `.env` on first run, so the GUI and CLI stay in sync.
+
 ## 📂 Project layout
 
 ```
@@ -92,11 +114,18 @@ node demo.js 2        # expect a different number
 ├── README.md
 ├── SPEC.md                  # full design & BLE decode reference
 ├── .env.example             # template for naming your sensors
-├── node/
+├── node/                    # CLI tools
 │   ├── demo.js              # proof-of-concept: live per-device table
 │   ├── collector.js         # long-running logger → per-day JSON
 │   ├── diag.js              # diagnostic scan (find a missing/weak sensor)
 │   ├── govee.js             # shared H5075 decoder
+│   ├── store.js             # shared persistence (names, per-day JSON, timestamps)
+│   └── package.json
+├── electron/                # desktop dashboard
+│   ├── main.js              # main process: BLE scan + IPC + logging
+│   ├── preload.js           # contextBridge IPC
+│   ├── smoke.js             # headless self-test (noble loads under Electron)
+│   ├── renderer/            # index.html · styles.css · app.js
 │   └── package.json
 └── logs/                    # generated at runtime: readings-YYYY-MM-DD.json
 ```

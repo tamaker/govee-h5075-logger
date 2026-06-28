@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <title>Govee H5075 Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◐</span>
+      <div>
+        <div class="brand-title">Govee&nbsp;H5075</div>
+        <div class="brand-sub">Live BLE Dashboard</div>
+      </div>
+    </div>
+
+    <div class="status-cluster">
+      <div id="bleState" class="pill pill-muted"><span class="dot"></span><span id="bleStateText">starting…</span></div>
+      <div id="deviceCount" class="pill pill-muted">0 sensors</div>
+      <div id="logPill" class="pill pill-muted">logging off</div>
+    </div>
+
+    <div class="actions">
+      <div class="seg" id="unitToggle" title="Temperature unit">
+        <button data-unit="C" class="seg-btn active">°C</button>
+        <button data-unit="F" class="seg-btn">°F</button>
+      </div>
+      <button id="btnLogging" class="btn">Start logging</button>
+      <button id="btnExport" class="btn">Export ▾</button>
+      <button id="btnSettings" class="btn btn-icon" title="Settings">⚙</button>
+    </div>
+
+    <div id="exportMenu" class="menu hidden">
+      <button data-act="csv">Export readings as CSV</button>
+      <button data-act="json">Export readings as JSON</button>
+      <button data-act="env">Sync names → .env</button>
+      <button data-act="logs">Open log folder</button>
+    </div>
+  </header>
+
+  <main id="grid" class="grid"></main>
+
+  <div id="empty" class="empty">
+    <div class="empty-spinner"></div>
+    <h2>Listening for sensors…</h2>
+    <p id="emptyHint">Make sure Bluetooth is on and this app has Bluetooth permission.</p>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Settings & Alerts</h3>
+        <button id="closeSettings" class="btn btn-icon">✕</button>
+      </div>
+      <div class="modal-body">
+        <section>
+          <h4>Logging</h4>
+          <label class="field">Sample interval (seconds)
+            <input id="setInterval" type="number" min="2" step="1">
+          </label>
+          <p class="muted">One reading per sensor is written to a per-day JSON file at this interval.</p>
+        </section>
+        <section>
+          <h4>Alert thresholds <span class="muted">(blank = off)</span></h4>
+          <div class="row">
+            <label class="field">Temp min (°C)<input id="setTempMin" type="number" step="0.1"></label>
+            <label class="field">Temp max (°C)<input id="setTempMax" type="number" step="0.1"></label>
+          </div>
+          <div class="row">
+            <label class="field">Humidity min (%)<input id="setHumMin" type="number" step="1"></label>
+            <label class="field">Humidity max (%)<input id="setHumMax" type="number" step="1"></label>
+          </div>
+          <label class="field">Low-battery warning at (%)<input id="setBatt" type="number" min="0" max="100" step="1"></label>
+        </section>
+      </div>
+      <div class="modal-foot">
+        <button id="saveSettings" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

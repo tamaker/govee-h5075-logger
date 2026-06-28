@@ -1,0 +1,16 @@
+{
+  "name": "govee-h5075-desktop",
+  "version": "1.0.0",
+  "description": "Electron desktop dashboard for Govee H5075 BLE sensors",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron smoke.js"
+  },
+  "dependencies": {
+    "@abandonware/noble": "^1.9.2-26"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

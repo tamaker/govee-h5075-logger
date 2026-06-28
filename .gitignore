@@ -8,6 +8,7 @@ readings.csv
 
 # Local config (custom sensor names) — template is .env.example
 .env
+names.json
 
 # OS / editor
 .DS_Store
