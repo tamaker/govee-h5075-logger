@@ -1,0 +1,66 @@
+%% Architecture Overview: Two independent front ends (Electron GUI + CLI) each
+%% connect DIRECTLY to the sensors over BLE. There is no shared server/daemon.
+graph TD
+    subgraph sensors["🌡️ Hardware (BLE broadcasters)"]
+        s1["GVH5075_1098"]
+        s2["GVH5075_A7A8"]
+        s3["GVH5075_C375"]
+    end
+
+    cb["macOS CoreBluetooth\n(BLE adapter)"]
+    s1 -. "adv ~2s (0xEC88)" .-> cb
+    s2 -. "adv ~2s (0xEC88)" .-> cb
+    s3 -. "adv ~2s (0xEC88)" .-> cb
+
+    subgraph electron["🖥️ Electron desktop app (one process tree)"]
+        emain["main.js\n(Node main process + noble)"]
+        epre["preload.js\n(contextBridge)"]
+        erend["renderer/app.js\n(Chromium UI)"]
+        emain -- "IPC: reading / ble-state" --> epre
+        epre --> erend
+        erend -- "IPC: names / settings / export" --> emain
+    end
+
+    subgraph cli["⌨️ CLI tools (separate, optional processes)"]
+        collector["collector.js\n(logger)"]
+        demo["demo.js\n(live table)"]
+        diag["diag.js\n(diagnostics)"]
+    end
+
+    subgraph shared["📦 Shared modules"]
+        govee["govee.js\n(decodeH5075)"]
+        store["store.js\n(names + per-day JSON)"]
+    end
+
+    cb -- "noble 'discover'" --> emain
+    cb -- "noble 'discover'" --> collector
+    cb -- "noble 'discover'" --> demo
+    cb -- "noble 'discover'" --> diag
+
+    emain --> govee
+    emain --> store
+    collector --> govee
+    collector --> store
+    demo --> govee
+    diag --> govee
+
+    subgraph data["💾 Files on disk"]
+        namesjson["names.json"]
+        envfile[".env"]
+        logs["logs/readings-YYYY-MM-DD.json"]
+    end
+
+    store --> namesjson
+    store --> envfile
+    store --> logs
+
+    classDef hw fill:#1f2d3d,stroke:#2f9bff,color:#e6edf3;
+    classDef app fill:#13233a,stroke:#36d399,color:#e6edf3;
+    classDef cliC fill:#2a2333,stroke:#f5a524,color:#e6edf3;
+    classDef sh fill:#222a18,stroke:#a3e635,color:#e6edf3;
+    classDef dat fill:#2a1f2d,stroke:#f0506e,color:#e6edf3;
+    class s1,s2,s3,cb hw;
+    class emain,epre,erend app;
+    class collector,demo,diag cliC;
+    class govee,store sh;
+    class namesjson,envfile,logs dat;

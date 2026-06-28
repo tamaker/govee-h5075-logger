@@ -1,0 +1,21 @@
+%% BLE Decode Pipeline: how a raw advertisement becomes a reading object.
+%% Identical logic in govee.js for both the Electron app and the CLI.
+flowchart TD
+    adv["BLE advertisement\nmanufacturerData Buffer"] --> f1{"localName starts\nwith 'GVH507'?"}
+    f1 -- no --> drop1["ignore (not our sensor)"]
+    f1 -- yes --> f2{"company id == 0xEC88\n& length >= 7?"}
+    f2 -- no --> drop2["ignore (not H5075 payload)"]
+    f2 -- yes --> dec["decodeH5075():\ntemphum = bytes[3..5] (24-bit)\nbattery = byte[6]"]
+    dec --> calc["hum10 = temphum mod 1000\nhumidity = hum10/10\ntemp_c = (temphum - hum10)/10000\ntemp_f = temp_c*9/5 + 32"]
+    calc --> build["buildReading() returns:\ntimestamp_local, device_name,\ncustom_name, temp_c/f, humidity_pct,\nbattery_pct, rssi"]
+    build --> ui["Electron: send IPC → UI card"]
+    build --> log["CLI/GUI: throttle then\nappend to per-day JSON"]
+
+    classDef inn fill:#1f2d3d,stroke:#2f9bff,color:#e6edf3;
+    classDef proc fill:#222a18,stroke:#a3e635,color:#e6edf3;
+    classDef out fill:#13233a,stroke:#36d399,color:#e6edf3;
+    classDef bad fill:#2a1f2d,stroke:#f0506e,color:#e6edf3;
+    class adv inn;
+    class dec,calc,build proc;
+    class ui,log out;
+    class drop1,drop2 bad;

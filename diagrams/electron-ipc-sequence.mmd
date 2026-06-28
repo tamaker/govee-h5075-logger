@@ -1,0 +1,30 @@
+%% IPC Sequence: lifecycle of a reading and a rename in the Electron app.
+sequenceDiagram
+    participant Sensor as H5075 sensor
+    participant CB as CoreBluetooth
+    participant Main as main.js (Node)
+    participant Pre as preload (IPC)
+    participant UI as renderer/app.js
+
+    Note over Main: app.whenReady() → setupNoble() + createWindow()
+    Main->>CB: noble.startScanningAsync([], true)
+
+    loop every ~2s per sensor
+        Sensor-->>CB: BLE advertisement (0xEC88 payload)
+        CB-->>Main: noble 'discover'(peripheral)
+        Main->>Main: filter GVH507* + decodeH5075()
+        Main->>Main: buildReading(name, names[name], decoded, rssi)
+        Main-->>Pre: send('reading', reading)
+        Pre-->>UI: onReading(reading)
+        UI->>UI: update card, sparkline, alerts
+        alt logging enabled & interval elapsed
+            Main->>Main: store.appendReading(logs/…json)
+        end
+    end
+
+    Note over UI: user edits a card name
+    UI->>Pre: setName(device, "garage")
+    Pre->>Main: invoke 'names:set'
+    Main->>Main: store.saveNames(names.json)
+    Main-->>UI: updated names map
+    UI->>UI: toast "Renamed"

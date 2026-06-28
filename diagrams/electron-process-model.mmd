@@ -1,0 +1,39 @@
+%% Process Model: what is actually running when you launch the Electron app.
+%% ONE app, two threads/processes inside it. No background API server, no daemon,
+%% no collector.js required.
+graph LR
+    user(["You: npm start"])
+
+    subgraph appproc["Electron application (single app, launched once)"]
+        direction TB
+        subgraph mainp["Main process — Node.js runtime"]
+            noble["@abandonware/noble\n(native N-API addon)"]
+            scan["BLE scan + decode\n+ throttled logging"]
+            ipcm["ipcMain handlers\n(names / settings / export)"]
+            noble --> scan
+            scan --- ipcm
+        end
+        subgraph rendp["Renderer process — Chromium"]
+            ui["Dashboard UI\n(cards, charts, alerts)"]
+        end
+        mainp <-- "IPC channel\n(preload contextBridge)" --> rendp
+    end
+
+    corebt["macOS CoreBluetooth"]
+
+    user --> appproc
+    noble <--> corebt
+    corebt -. "advertisements" .-> noble
+
+    note["❌ No Express / HTTP API\n❌ No separate background service\n✅ Direct BLE, all in-process"]
+
+    classDef u fill:#13233a,stroke:#2f9bff,color:#e6edf3;
+    classDef m fill:#222a18,stroke:#a3e635,color:#e6edf3;
+    classDef r fill:#2a2333,stroke:#f5a524,color:#e6edf3;
+    classDef bt fill:#1f2d3d,stroke:#2f9bff,color:#e6edf3;
+    classDef n fill:#2a1f2d,stroke:#f0506e,color:#e6edf3;
+    class user u;
+    class noble,scan,ipcm m;
+    class ui r;
+    class corebt bt;
+    class note n;

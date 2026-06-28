@@ -43,6 +43,7 @@ Built with Node.js + [`@abandonware/noble`](https://github.com/abandonware/noble
 - 🛏️ **Friendly names** — map each sensor to a room via an optional `.env` (e.g. `downstairs`, `garage`).
 - 🩺 **Built-in diagnostics** — a wide-net scanner to track down a weak or missing sensor.
 - ⏱️ **Smart throttling** — one logged reading per device per minute (configurable).
+- 🖥️ **Desktop app** — an optional Electron dashboard with live cards, in-app renaming, charts, threshold alerts, and exports (see [below](#️-desktop-app-electron)).
 
 ## 🚀 Quick start
 
@@ -94,8 +95,10 @@ A polished GUI alternative to the CLI — a live dashboard with sensor cards, in
 ```bash
 cd electron
 npm install
-npm start
+npm start            # launch the dashboard
 ```
+
+**Stopping:** quit the app normally (⌘Q / close the window). Logging is a toolbar toggle — turn it off without quitting, or leave it on across restarts (the setting persists).
 
 **What it does:**
 
@@ -129,8 +132,65 @@ npm start
 │   ├── smoke.js             # headless self-test (noble loads under Electron)
 │   ├── renderer/            # index.html · styles.css · app.js
 │   └── package.json
+├── diagrams/                # Mermaid (.mmd) + editable draw.io source
+├── docs/images/             # rendered diagrams & screenshots
 └── logs/                    # generated at runtime: readings-YYYY-MM-DD.json
 ```
+
+## 🏗️ Architecture — what runs behind the Electron app
+
+**The desktop app talks to the sensors directly over Bluetooth. There is no background API, web server, or daemon — and it does *not* depend on `collector.js` running.**
+
+When you run `npm start`, Electron launches **one application** made of two parts:
+
+- **Main process (Node.js)** — loads `@abandonware/noble`, which speaks to macOS **CoreBluetooth**, scans for BLE advertisements, decodes them with `govee.js`, and (if logging is on) writes per-day JSON with `store.js`.
+- **Renderer process (Chromium)** — the dashboard UI. It holds **no** Bluetooth logic; it only receives decoded readings from the main process over a secured **IPC** channel (via `preload.js`) and sends back actions like rename/settings/export.
+
+The CLI tools (`demo.js`, `collector.js`, `diag.js`) are **separate, optional programs** that connect to the same sensors the same way. You can run the GUI, a CLI tool, or both — just avoid running two *loggers* into the same `logs/` folder at once.
+
+![System architecture](docs/images/architecture.drawio.png)
+
+```mermaid
+graph LR
+    sensors["🌡️ 3× Govee H5075\n(BLE broadcasters)"]
+    cb["macOS CoreBluetooth"]
+    sensors -. "adv ~2s (0xEC88)" .-> cb
+
+    subgraph app["Electron app (one process tree — no server)"]
+        direction TB
+        main["Main process (Node)\nnoble + decode + logging"]
+        ui["Renderer (Chromium)\ndashboard UI"]
+        main <-- "IPC via preload\n(reading / names / settings)" --> ui
+    end
+
+    cb -- "noble 'discover'" --> main
+
+    cli["CLI tools (separate, optional)\ncollector.js · demo.js · diag.js"]
+    cb -- "noble 'discover'" --> cli
+
+    classDef hw fill:#1f2d3d,stroke:#2f9bff,color:#e6edf3;
+    classDef a fill:#13233a,stroke:#36d399,color:#e6edf3;
+    classDef c fill:#2a2333,stroke:#f5a524,color:#e6edf3;
+    class sensors,cb hw;
+    class main,ui a;
+    class cli c;
+```
+
+> **Native module note:** noble is an N-API addon (`napi_versions: [4]`), which is ABI-stable across both Node.js and Electron — so the same prebuilt binary works in the CLI and the GUI with **no `electron-rebuild` step**.
+
+### Diagrams
+
+More detailed diagrams live in [`diagrams/`](./diagrams/) as Mermaid `.mmd` files (they render natively on GitHub):
+
+| Diagram | Description |
+|---------|-------------|
+| [Architecture overview](./diagrams/architecture-overview.mmd) | All components: GUI, CLI, shared modules, and files — and how each reaches the sensors. |
+| [Electron process model](./diagrams/electron-process-model.mmd) | What's actually running: main + renderer in one app, no API/daemon. |
+| [Electron IPC sequence](./diagrams/electron-ipc-sequence.mmd) | Lifecycle of a reading and a rename across CoreBluetooth → main → renderer. |
+| [BLE decode pipeline](./diagrams/ble-decode-pipeline.mmd) | How a raw advertisement is filtered and decoded into a reading object. |
+| [Custom-name data flow](./diagrams/names-data-flow.mmd) | How `names.json` and `.env` relate and stay in sync. |
+
+> **Viewing locally:** use the [Mermaid Live Editor](https://mermaid.live) or the VS Code "Markdown Preview Mermaid Support" extension.
 
 ## 📝 Log format
 

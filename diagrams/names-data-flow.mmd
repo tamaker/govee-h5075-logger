@@ -1,0 +1,24 @@
+%% Custom-Name Data Flow: how names.json and .env relate and stay in sync.
+flowchart LR
+    subgraph gui["Electron app"]
+        edit["Inline rename on a card"]
+        export["Export ▾ → Sync names → .env"]
+    end
+
+    namesjson[("names.json\n{device: custom_name}")]
+    envfile[(".env\nDEVICE=custom_name")]
+
+    edit -- "names:set (IPC)" --> namesjson
+    namesjson -- "seeds on first run\nif names.json missing" --> namesjson
+    envfile -. "store.loadEnvNames()\nseeds GUI first run" .-> namesjson
+    export -- "store.exportNamesToEnv()" --> envfile
+
+    namesjson --> guiuse["GUI: card labels +\nreading.custom_name"]
+    envfile --> cliuse["CLI collector.js:\nreading.custom_name"]
+
+    classDef gui fill:#13233a,stroke:#36d399,color:#e6edf3;
+    classDef file fill:#2a1f2d,stroke:#f0506e,color:#e6edf3;
+    classDef use fill:#222a18,stroke:#a3e635,color:#e6edf3;
+    class edit,export gui;
+    class namesjson,envfile file;
+    class guiuse,cliuse use;
